@@ -3,9 +3,11 @@ package gui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import application.Main;
+import db.DbException;
 import gui.listeners.ListenerAlteracaoDeDados;
 import gui.util.Alerts;
 import gui.util.Utils;
@@ -19,6 +21,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -44,6 +47,9 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 
 	@FXML
 	private TableColumn<Departamento, Departamento> tableColumnEditar;
+
+	@FXML
+	private TableColumn<Departamento, Departamento> tableColumnExcluir;
 
 	@FXML
 	private Button btNovo;
@@ -82,6 +88,7 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 		obsLista = FXCollections.observableArrayList(listaDepartamento);
 		tableViewDepartamento.setItems(obsLista);
 		inicializarBotaoDeEdicao();
+		inicializarBotaoDeExclusao();
 	}
 
 	private void criarDialogForm(Departamento obj, String nomeAbsoluto, Stage stagePai) {
@@ -115,11 +122,11 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 	private void inicializarBotaoDeEdicao() {
 		tableColumnEditar.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
 		tableColumnEditar.setCellFactory(param -> new TableCell<Departamento, Departamento>() {
-			private final Button botao = new Button("editar");
+			private final Button botao = new Button("Editar");
 
 			@Override
-			protected void updateItem(Departamento obj, boolean empty) {
-				super.updateItem(obj, empty);
+			protected void updateItem(Departamento obj, boolean vazio) {
+				super.updateItem(obj, vazio);
 				if (obj == null) {
 					setGraphic(null);
 					return;
@@ -129,5 +136,40 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 						evento -> criarDialogForm(obj, "/gui/FormDepartamento.fxml", Utils.stageAtual(evento)));
 			}
 		});
+	}
+
+	private void inicializarBotaoDeExclusao() {
+		tableColumnExcluir.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
+		tableColumnExcluir.setCellFactory(param -> new TableCell<Departamento, Departamento>() {
+			private final Button botao = new Button("Excluir");
+
+			@Override
+			protected void updateItem(Departamento obj, boolean vazio) {
+				super.updateItem(obj, vazio);
+				if (obj == null) {
+					setGraphic(null);
+					return;
+				}
+				setGraphic(botao);
+				botao.setOnAction(event -> excluirEntidade(obj));
+			}
+		});
+	}
+
+	private void excluirEntidade(Departamento obj) {
+		Optional<ButtonType> resultado = Alerts.solicitarConfirmacao("Confirmação", "Tem certeza que seja excluir?");
+		
+		if (resultado.get() == ButtonType.OK) {
+			if (servico == null) {
+				throw new IllegalStateException("Serviço está nulo");
+			}
+			try {
+				servico.remover(obj);
+				atualizarTableView();
+			}
+			catch (DbException e) {
+				Alerts.showAlert("Erro ao excluir o objeto", null, e.getMessage(), AlertType.ERROR);
+			}
+		}
 	}
 }

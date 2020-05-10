@@ -22,4 +22,8 @@ public class ServicoDepartamento {
 			dao.atualizar(obj);
 		}
 	}
+	
+	public void remover(Departamento obj) {
+		dao.excluirPeloId(obj.getId());
+	}
 }
