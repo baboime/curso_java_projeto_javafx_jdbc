@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import application.Main;
+import gui.listeners.ListenerAlteracaoDeDados;
 import gui.util.Alerts;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,7 +26,7 @@ import javafx.stage.Stage;
 import model.entidades.Departamento;
 import model.servicos.ServicoDepartamento;
 
-public class ListaDepartamentoController implements Initializable {
+public class ListaDepartamentoController implements Initializable, ListenerAlteracaoDeDados {
 	
 	private ServicoDepartamento servico;
 	
@@ -83,6 +84,8 @@ public class ListaDepartamentoController implements Initializable {
 			
 			FormDepartamentoController controlador = loader.getController();
 			controlador.setDepartamento(obj);
+			controlador.setServicoDepartamento(new ServicoDepartamento());
+			controlador.acionarListenerAlteracaoDeDados(this);
 			controlador.atualizarFormData();
 			
 			Stage dialogStage = new Stage();
@@ -96,5 +99,10 @@ public class ListaDepartamentoController implements Initializable {
 		catch (IOException e) {
 			Alerts.showAlert("IO Exception", "Erro ao carregar a View", e.getMessage(), AlertType.ERROR);
 		}
+	}
+
+	@Override
+	public void quandoHouverAlteracaoDeDados() {
+		atualizarTableView();
 	}
 }

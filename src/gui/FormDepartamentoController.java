@@ -1,19 +1,32 @@
 package gui;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import db.DbException;
+import gui.listeners.ListenerAlteracaoDeDados;
+import gui.util.Alerts;
 import gui.util.Constraints;
+import gui.util.Utils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import model.entidades.Departamento;
+import model.servicos.ServicoDepartamento;
 
 public class FormDepartamentoController implements Initializable {
 	
 	private Departamento entidade;
+	
+	private ServicoDepartamento servico;
+	
+	private List<ListenerAlteracaoDeDados> listenersAlteracaoDeDados = new ArrayList<>();
 	
 	@FXML
 	private TextField txtId;
@@ -34,14 +47,51 @@ public class FormDepartamentoController implements Initializable {
 		this.entidade = entidade;
 	}
 	
-	@FXML
-	public void onBtSalvarAcao() {
-		System.out.println("onBtSalvarAcao");
+	public void setServicoDepartamento(ServicoDepartamento servico) {
+		this.servico = servico;
+	}
+	
+	public void acionarListenerAlteracaoDeDados(ListenerAlteracaoDeDados listener) {
+		listenersAlteracaoDeDados.add(listener);
 	}
 	
 	@FXML
-	public void onBtCancelarAcao() {
-		System.out.println("onBtCancelarAcao");
+	public void onBtSalvarAcao(ActionEvent evento) {
+		if (entidade == null) {
+			throw new IllegalStateException("Entidade está nula");
+		}
+		if (servico == null) {
+			throw new IllegalStateException("Servico está nulo");
+		}
+		try {
+			entidade = getDadosDoForm();
+			servico.salvarOuAtualizar(entidade);
+			notificarListenersAlteracaoDeDados();
+			Utils.stageAtual(evento).close();
+		}
+		catch (DbException e) {
+			Alerts.showAlert("Erro ao atualizar objeto", null, e.getMessage(), AlertType.ERROR);
+		}
+	}
+	
+	private void notificarListenersAlteracaoDeDados() {
+		for (ListenerAlteracaoDeDados listener : listenersAlteracaoDeDados) {
+			listener.quandoHouverAlteracaoDeDados();
+		}
+	}
+
+	private Departamento getDadosDoForm() {
+		Departamento obj = new Departamento();
+		
+		obj.setId(Utils.tryParseToInt(txtId.getText()));
+		obj.setNome(txtNome.getText());
+		
+		return obj;
+	}
+
+	@FXML
+	public void onBtCancelarAcao(ActionEvent evento) {
+		Utils.stageAtual(evento).close();
 	}
  
 	@Override
@@ -61,4 +111,5 @@ public class FormDepartamentoController implements Initializable {
 		txtId.setText(String.valueOf(entidade.getId()));
 		txtNome.setText(entidade.getNome());
 	}
+	
 }
