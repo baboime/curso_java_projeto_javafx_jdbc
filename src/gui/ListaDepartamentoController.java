@@ -8,6 +8,8 @@ import java.util.ResourceBundle;
 import application.Main;
 import gui.listeners.ListenerAlteracaoDeDados;
 import gui.util.Alerts;
+import gui.util.Utils;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -17,6 +19,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -27,35 +30,38 @@ import model.entidades.Departamento;
 import model.servicos.ServicoDepartamento;
 
 public class ListaDepartamentoController implements Initializable, ListenerAlteracaoDeDados {
-	
+
 	private ServicoDepartamento servico;
-	
+
 	@FXML
 	private TableView<Departamento> tableViewDepartamento;
-	
+
 	@FXML
 	private TableColumn<Departamento, Integer> tableColumnId;
-	
+
 	@FXML
 	private TableColumn<Departamento, String> tableColumnNome;
-	
+
+	@FXML
+	private TableColumn<Departamento, Departamento> tableColumnEditar;
+
 	@FXML
 	private Button btNovo;
-	
+
 	private ObservableList<Departamento> obsLista;
-	
+
 	@FXML
 	public void onBtNovoAcao(ActionEvent evento) {
 		Stage stagePai = gui.util.Utils.stageAtual(evento);
 		Departamento obj = new Departamento();
 		criarDialogForm(obj, "/gui/FormDepartamento.fxml", stagePai);
 	}
-	
+
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
 		inicializarNodes();
 	}
-	
+
 	public void setServicoDepartamento(ServicoDepartamento servico) {
 		this.servico = servico;
 	}
@@ -63,11 +69,11 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 	private void inicializarNodes() {
 		tableColumnId.setCellValueFactory(new PropertyValueFactory<>("id"));
 		tableColumnNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
-		
+
 		Stage stage = (Stage) Main.getMainScene().getWindow();
 		tableViewDepartamento.prefHeightProperty().bind(stage.heightProperty());
 	}
-	
+
 	public void atualizarTableView() {
 		if (servico == null) {
 			throw new IllegalStateException("Servico está nulo");
@@ -75,19 +81,20 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 		List<Departamento> listaDepartamento = servico.buscarTudo();
 		obsLista = FXCollections.observableArrayList(listaDepartamento);
 		tableViewDepartamento.setItems(obsLista);
+		inicializarBotaoDeEdicao();
 	}
-	
+
 	private void criarDialogForm(Departamento obj, String nomeAbsoluto, Stage stagePai) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(nomeAbsoluto));
 			Pane painel = loader.load();
-			
+
 			FormDepartamentoController controlador = loader.getController();
 			controlador.setDepartamento(obj);
 			controlador.setServicoDepartamento(new ServicoDepartamento());
 			controlador.acionarListenerAlteracaoDeDados(this);
 			controlador.atualizarFormData();
-			
+
 			Stage dialogStage = new Stage();
 			dialogStage.setTitle("Dados Departamento");
 			dialogStage.setScene(new Scene(painel));
@@ -95,8 +102,7 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 			dialogStage.initOwner(stagePai);
 			dialogStage.initModality(Modality.WINDOW_MODAL);
 			dialogStage.showAndWait();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			Alerts.showAlert("IO Exception", "Erro ao carregar a View", e.getMessage(), AlertType.ERROR);
 		}
 	}
@@ -104,5 +110,24 @@ public class ListaDepartamentoController implements Initializable, ListenerAlter
 	@Override
 	public void quandoHouverAlteracaoDeDados() {
 		atualizarTableView();
+	}
+
+	private void inicializarBotaoDeEdicao() {
+		tableColumnEditar.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
+		tableColumnEditar.setCellFactory(param -> new TableCell<Departamento, Departamento>() {
+			private final Button botao = new Button("editar");
+
+			@Override
+			protected void updateItem(Departamento obj, boolean empty) {
+				super.updateItem(obj, empty);
+				if (obj == null) {
+					setGraphic(null);
+					return;
+				}
+				setGraphic(botao);
+				botao.setOnAction(
+						evento -> criarDialogForm(obj, "/gui/FormDepartamento.fxml", Utils.stageAtual(evento)));
+			}
+		});
 	}
 }
