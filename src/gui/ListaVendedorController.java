@@ -31,6 +31,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.entidades.Vendedor;
+import model.servicos.ServicoDepartamento;
 import model.servicos.ServicoVendedor;
 
 public class ListaVendedorController implements Initializable, ListenerAlteracaoDeDados {
@@ -113,7 +114,8 @@ public class ListaVendedorController implements Initializable, ListenerAlteracao
 
 			FormVendedorController controlador = loader.getController();
 			controlador.setVendedor(obj);
-			controlador.setServicoVendedor(new ServicoVendedor());
+			controlador.setServicos(new ServicoVendedor(), new ServicoDepartamento());
+			controlador.carregarObjetosAssociados();
 			controlador.acionarListenerAlteracaoDeDados(this);
 			controlador.atualizarFormData();
 
@@ -125,6 +127,7 @@ public class ListaVendedorController implements Initializable, ListenerAlteracao
 			dialogStage.initModality(Modality.WINDOW_MODAL);
 			dialogStage.showAndWait();
 		} catch (IOException e) {
+			e.printStackTrace();
 			Alerts.showAlert("IO Exception", "Erro ao carregar a View", e.getMessage(), AlertType.ERROR);
 		}
 	}
