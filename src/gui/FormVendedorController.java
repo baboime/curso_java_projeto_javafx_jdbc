@@ -1,9 +1,11 @@
 package gui;
 
 import java.net.URL;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -135,7 +137,28 @@ public class FormVendedorController implements Initializable {
 		}
 
 		obj.setNome(txtNome.getText());
+				
+		if (txtEmail.getText() == null || txtEmail.getText().trim().equalsIgnoreCase("")) {
+			excecao.adicionarErro("email", "Email deve ser informado");
+		}
 
+		obj.setEmail(txtEmail.getText());
+		
+		if (dpDataDeNascimento.getValue() == null) {
+			excecao.adicionarErro("dataDeNascimento", "Data de nascimento deve ser informada");
+		}
+		else {		
+			Instant instante = Instant.from(dpDataDeNascimento.getValue().atStartOfDay(ZoneId.systemDefault()));
+			obj.setDataDeNascimento(Date.from(instante));
+		}
+		
+		if (txtSalarioBase.getText() == null || txtSalarioBase.getText().trim().equalsIgnoreCase("")) {
+			excecao.adicionarErro("salarioBase", "Salário deve ser informado");
+		}
+		obj.setSalarioBase(Utils.tryParseToDouble(txtSalarioBase.getText()));
+		
+		obj.setDepartamento(comboBoxDepartamento.getValue());
+		
 		if (excecao.getErros().size() > 0) {
 			throw excecao;
 		}
@@ -195,10 +218,11 @@ public class FormVendedorController implements Initializable {
 
 	private void setMensagensDeErro(Map<String, String> erros) {
 		Set<String> campos = erros.keySet();
-
-		if (campos.contains("nome")) {
-			labelMensagemDeErroNome.setText(erros.get("nome"));
-		}
+		
+		labelMensagemDeErroNome.setText(campos.contains("nome") ? erros.get("nome") : "");
+		labelMensagemDeErroEmail.setText(campos.contains("email") ? erros.get("email") : "");
+		labelMensagemDeErroSalarioBase.setText(campos.contains("salarioBase") ? erros.get("salarioBase") : "");
+		labelMensagemDeErroDataDeNascimento.setText(campos.contains("dataDeNascimento") ? erros.get("dataDeNascimento") : "");
 	}
 
 	private void inicializarComboBoxDepartmento() {
